@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String          @id @default(cuid())
+  username          String          @unique
+  passwordHash      String
+  role              String          @default("user")
+  tier              String          @default("FREE") // "FREE" | "PRO"
+  dailyAiCount      Int             @default(0)
+  lastAiReset       DateTime        @default(now())
+  productivityScore Int             @default(0)
+  userApiKey        String?
+  aiProvider        String          @default("gemini") // "gemini" | "openai" | "claude"
+  theme             String          @default("dark")
+  subscriptionEnd   DateTime?
+  createdAt         DateTime        @default(now())
+  tasks             Task[]
+  goals             Goal[]
+  habits            Habit[]
+  habitLogs         HabitLog[]
+  transactions      Transaction[]
+  budgets           Budget[]
+  studySessions     StudySession[]
+  events            CalendarEvent[]
+  documents         DocumentItem[]
+  projects          Project[]
+  timelineEvents    TimelineEvent[]
+  aiReports         AiReport[]
+  aiPlans           AiPlan[]
+  payments          PaymentRecord[]
+  specialDays       SpecialDay[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  priority    String    @default("MEDIUM") // "LOW", "MEDIUM", "HIGH", "URGENT"
+  status      String    @default("TODO") // "TODO", "IN_PROGRESS", "DONE"
+  dueDate     DateTime?
+  category    String    @default("General")
+  eisenhower  String    @default("DO_FIRST") // "DO_FIRST", "SCHEDULE", "DELEGATE", "DONT_DO"
+  createdAt   DateTime  @default(now())
+}
+
+model Goal {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  targetValue  Float     @default(100)
+  currentValue Float     @default(0)
+  unit         String    @default("%")
+  deadline     DateTime?
+  category     String    @default("Life")
+  createdAt    DateTime  @default(now())
+}
+
+model Habit {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  category   String     @default("Health")
+  frequency  String     @default("daily")
+  streak     Int        @default(0)
+  bestStreak Int        @default(0)
+  icon       String     @default("Zap")
+  color      String     @default("blue")
+  createdAt  DateTime   @default(now())
+  logs       HabitLog[]
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String   // "YYYY-MM-DD"
+  completed Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  amount    Float
+  type      String   // "INCOME" | "EXPENSE"
+  category  String   @default("General")
+  date      DateTime @default(now())
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model Budget {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String
+  limit     Float
+  spent     Float    @default(0)
+  month     String   // "YYYY-MM"
+  createdAt DateTime @default(now())
+}
+
+model StudySession {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject         String
+  durationMinutes Int
+  notes           String?
+  date            DateTime @default(now())
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  category    String   @default("General")
+  color       String   @default("blue")
+  createdAt   DateTime @default(now())
+}
+
+model DocumentItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  category  String   @default("Personal")
+  tags      String?
+  isVault   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      String    @default("IN_PROGRESS") // "PLANNING", "IN_PROGRESS", "REVIEW", "COMPLETED"
+  progress    Int       @default(0)
+  deadline    DateTime?
+  color       String    @default("blue")
+  createdAt   DateTime  @default(now())
+}
+
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    String   @default("Achievement")
+  date        DateTime @default(now())
+  icon        String   @default("Award")
+}
+
+model AiReport {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  week            String
+  summary         String
+  strengths       String
+  bottlenecks     String
+  recommendations String
+  createdAt       DateTime @default(now())
+}
+
+model AiPlan {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  diagnostic  String
+  focusAreas  String
+  actionSteps String   // JSON string of array
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+}
+
+model PaymentRecord {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoiceNumber String   @unique
+  gateway       String   // "Stripe", "PayPal", "Card", "UPI"
+  planType      String   // "monthly", "yearly"
+  amount        Float    // 99.00 or 1100.00
+  currency      String   @default("INR")
+  status        String   @default("PAID") // "PAID", "REFUNDED", "FAILED"
+  cardBrand     String?
+  cardLast4     String?
+  upiId         String?
+  billingName   String?
+  billingEmail  String?
+  createdAt     DateTime @default(now())
+}
+
+model SpecialDay {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  targetDate  DateTime
+  category    String   @default("Event") // "Birthday", "Exam", "Anniversary", "Trip", "Holiday", "Other"
+  color       String   @default("blue")
+  notes       String?
+  createdAt   DateTime @default(now())
+}
